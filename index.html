@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#3a2414">
+<title>Davi e Golias</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div class="top">
+    <div class="pill life"><div class="face"></div><div class="bar"><i id="hp"></i></div></div>
+    <div class="pill score">★ <b id="score">0</b></div>
+    <div class="pill coins">● <b id="coins">0</b></div>
+    <div class="pill prog"><div class="bar blue"><i id="prog"></i></div></div>
+    <div class="pill time">⏱ <b id="time">0:00</b></div>
+    <div class="topbtns">
+      <button class="round" id="btnShopHud" title="Loja">🛒</button>
+      <button class="round" id="btnPause" title="Pausa">❚❚</button>
+    </div>
+  </div>
+  <div id="sheepInfo" class="sheepinfo hidden">🐑 <b id="sheepCount">0</b></div>
+  <div id="msg" class="msg hidden"></div>
+  <div class="ctrl left">
+    <button class="stonebtn" id="btnL" aria-label="Esquerda">◀</button>
+    <button class="stonebtn" id="btnR" aria-label="Direita">▶</button>
+  </div>
+  <div class="ctrl right">
+    <div class="types">
+      <button class="type" data-t="comum"><span class="dot comum"></span><b>0</b></button>
+      <button class="type" data-t="ferro"><span class="dot ferro"></span><b>0</b></button>
+      <button class="type" data-t="fogo"><span class="dot fogo"></span><b>0</b></button>
+    </div>
+    <button class="stonebtn big" id="btnFire" aria-label="Atirar">🎯<small>ATIRAR</small></button>
+  </div>
+</div>
+
+<!-- Telas -->
+<div id="screen-menu" class="screen">
+  <div class="title">
+    <h1>Davi <span>e</span> Golias</h1>
+    <p>Um menino, uma funda e muita fé.</p>
+    <button class="wood big" id="btnPlay">JOGAR</button>
+    <p class="small">Teclado: A/D ou ◀ ▶ para andar · clique para mirar e atirar · Espaço atira no alvo mais próximo · 1/2/3 troca a pedra</p>
+  </div>
+</div>
+
+<div id="screen-map" class="screen hidden">
+  <div class="board map">
+    <div class="ribbon">Mapa</div>
+    <div class="maptools">
+      <button class="round" id="btnShopMap" title="Loja">🛒</button>
+      <button class="round" id="btnMute" title="Som">🔊</button>
+      <button class="round" id="btnReset" title="Recomeçar progresso">↺</button>
+    </div>
+    <div class="mapwrap">
+      <svg id="mapPath" viewBox="0 0 100 60" preserveAspectRatio="none"></svg>
+      <div id="mapNodes"></div>
+    </div>
+    <div class="mapfoot">● <b id="mapCoins">0</b></div>
+  </div>
+</div>
+
+<div id="screen-intro" class="screen hidden">
+  <div class="shield"><div class="num" id="introNum">1</div><div class="band">Nível</div></div>
+  <div class="sign" id="introTag">COMBATE</div>
+  <div class="board small">
+    <h2 id="introName"></h2>
+    <p id="introStory"></p>
+    <p class="goal">🎯 <span id="introGoal"></span></p>
+    <p class="tip" id="introTip"></p>
+    <button class="wood" id="btnStart">COMEÇAR</button>
+  </div>
+</div>
+
+<div id="screen-shop" class="screen hidden">
+  <div class="board">
+    <div class="ribbon">Loja</div>
+    <button class="round close" id="btnShopClose">✕</button>
+    <div class="shopcoins">● <b id="shopCoins">0</b></div>
+    <div class="shopgrid" id="shopGrid"></div>
+    <p class="tip">Melhore sempre a funda ou compre pedras!</p>
+  </div>
+</div>
+
+<div id="screen-pause" class="screen hidden">
+  <div class="board small">
+    <div class="ribbon">Pausa</div>
+    <button class="wood" id="btnResume">CONTINUAR</button>
+    <button class="wood" id="btnRestart">RECOMEÇAR</button>
+    <button class="wood" id="btnQuit">MAPA</button>
+  </div>
+</div>
+
+<div id="screen-result" class="screen hidden">
+  <div class="congrats" id="congrats">Parabéns!</div>
+  <div class="board small hidden" id="scoreCard">
+    <div class="ribbon">Pontuação</div>
+    <p class="big">Você fez:</p>
+    <div class="points" id="points">0</div>
+    <p class="big">pontos!</p>
+    <p id="resultCoins"></p>
+    <button class="wood" id="btnToPrize">PRÊMIO</button>
+  </div>
+  <div class="prize hidden" id="prizeBox">
+    <div class="cards" id="cards"></div>
+    <div class="ribbon wide">Escolha seu prêmio</div>
+    <button class="wood hidden" id="btnToMap">CONTINUAR</button>
+  </div>
+</div>
+
+<div id="screen-over" class="screen hidden">
+  <div class="board small">
+    <div class="ribbon">Não desista!</div>
+    <div id="overMain">
+      <p>Responda a pergunta e continue com a vida cheia.</p>
+      <button class="wood" id="btnQuiz">RESPONDER</button>
+      <button class="wood" id="btnRetry">TENTAR DE NOVO</button>
+      <button class="wood" id="btnOverMap">MAPA</button>
+    </div>
+    <div id="quiz" class="hidden">
+      <p class="q" id="quizQ"></p>
+      <div id="quizA"></div>
+      <p id="quizRes"></p>
+    </div>
+  </div>
+</div>
+
+<div id="screen-victory" class="screen hidden">
+  <div class="congrats gold">Vitória!</div>
+  <div class="board small">
+    <p>Davi venceu o gigante filisteu com uma funda e uma pedra — e com fé. (1 Samuel 17:50)</p>
+    <button class="wood" id="btnVictory">CONTINUAR</button>
+  </div>
+</div>
+
+<div id="loading" class="screen"><div class="board small"><p>CARREGANDO...</p></div></div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
