@@ -1,6 +1,6 @@
 // Cenários: pasto, deserto e vale de Elá — tudo procedural.
 import * as THREE from 'three';
-import { mat, makeSoldier } from './models.js';
+import { mat, makeSoldierLow } from './models.js';
 
 const PALETTES = {
   'pasto': { sky: 0x9fd3ef, fog: 0xbfe0ef, ground: 0x7db04a, path: 0xc9b077, hill: 0x5f8f3a, sun: 0xfff1d6, amb: 0.75 },
@@ -102,13 +102,12 @@ function fenceLine(width, z, color = 0x6b4a2b) {
 }
 
 // Exército ao fundo: fileira de soldados estáticos (decorativos)
-function army(z, count, spread) {
+function army(z, count, spread, tunic = 0xa5322a) {
   const g = new THREE.Group();
   for (let i = 0; i < count; i++) {
-    const s = makeSoldier({ shield: i % 3 === 0 });
+    const s = makeSoldierLow({ shield: i % 3 === 0, tunic });
     s.position.set(-spread / 2 + (i / (count - 1)) * spread + rand(-0.2, 0.2), 0, z + rand(-0.8, 0.8) - (i % 2) * 1.2);
     s.rotation.y = 0;
-    s.traverse((o) => { o.castShadow = false; });
     g.add(s);
   }
   return g;
@@ -198,10 +197,9 @@ export function buildWorld(scene, key) {
     root.add(army(-39, key === 'vale' ? 26 : 20, 32));
     if (key === 'vale') {
       // exército de Israel atrás do jogador
-      const israel = army(10, 16, 28);
+      const israel = army(10, 16, 28, 0x3a5fa5);
       israel.rotation.y = Math.PI;
       israel.position.z = 20;
-      israel.traverse((o) => { if (o.material?.color?.getHex() === 0xa5322a) o.material = mat(0x3a5fa5); });
       root.add(israel);
     }
   }

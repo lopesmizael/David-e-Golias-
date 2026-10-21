@@ -20,6 +20,8 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 300);
 const raycaster = new THREE.Raycaster();
@@ -198,8 +200,7 @@ function throwStone(target) {
 
 function enemyAimPoint(e) {
   const p = e.mesh.position.clone();
-  const hgt = { jarro: 1.1, urso: 1.1, leao: 1.0, soldado: 1.3, escudeiro: 1.3, golias: 3.8 }[e.type];
-  p.y = hgt;
+  p.y = e.mesh.userData.aimY;
   return p;
 }
 
@@ -273,7 +274,7 @@ function damageEnemy(e, stone, hitPos) {
   const S = STONES[stone.type];
   let dmg = S.damage;
   if (e.type === 'golias') {
-    const headshot = hitPos.y > 5.2;
+    const headshot = hitPos.y > e.mesh.userData.headY - 0.6;
     if (e.phase === 'shield' && !S.pierce) {
       sfx.block();
       puff(hitPos, 0xffe08a, 4, 0.2);
@@ -560,7 +561,7 @@ function updateStones(dt) {
       if (e.type === 'golias') {
         // corpo (cilindro) + cabeça
         const dx = s.pos.x - e.x, dz = s.pos.z - e.z;
-        hit = Math.hypot(dx, dz) < 1.4 && s.pos.y < 6.4 && s.pos.y > 0;
+        hit = Math.hypot(dx, dz) < 1.4 && s.pos.y < 7.2 && s.pos.y > 0;
       } else {
         tmp.copy(enemyAimPoint(e));
         hit = tmp.distanceTo(s.pos) < r + 0.25;
@@ -983,5 +984,5 @@ requestAnimationFrame(frame);
 // gancho para testes automatizados
 window.__game = {
   get state() { return state; }, get G() { return G; }, get save() { return save; },
-  startLevel, openMap, throwAt: (x, y, z) => throwStone(new THREE.Vector3(x, y, z)), autoTarget,
+  renderer, startLevel, openMap, throwAt: (x, y, z) => throwStone(new THREE.Vector3(x, y, z)), autoTarget,
 };
