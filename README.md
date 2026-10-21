@@ -9,6 +9,10 @@ nenhum asset do jogo original foi usado.
 
 ## Como jogar
 
+**Online (celular ou PC):** <https://lopesmizael.github.io/David-e-Golias-/>
+
+Localmente:
+
 Sirva a pasta por HTTP (módulos ES não carregam via `file://`):
 
 ```bash
