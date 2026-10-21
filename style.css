@@ -86,6 +86,18 @@ button { font: inherit; cursor: pointer; }
 .wood:disabled { filter: grayscale(1); opacity: .6; cursor: default; }
 .close { position: absolute; top: 8px; right: 8px; }
 
+/* Dificuldade */
+.diffs { display: inline-flex; gap: 6px; background: rgba(30, 18, 8, .6); padding: 5px; border-radius: 14px; border: 2px solid var(--wood-l); }
+.diff { background: transparent; color: #fff; border: 2px solid transparent; border-radius: 10px; padding: 7px 16px; font-weight: 900; font-size: 16px; text-shadow: 0 1px 0 #000; }
+.diff.sel { background: linear-gradient(var(--wood-l), var(--wood)); border-color: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.diff[data-d="facil"].sel { border-color: #9ee37a; box-shadow: 0 0 8px #9ee37a; }
+.diff[data-d="dificil"].sel { border-color: #ff6a5a; box-shadow: 0 0 8px #ff6a5a; }
+.title p.diffdesc { font-size: 14px; margin: 6px 0 4px; opacity: .9; }
+.pillbtn { height: 38px; border-radius: 19px; border: 2px solid var(--gold-d); background: radial-gradient(circle at 35% 30%, #f6e7b8, #c8a45a);
+  color: var(--ink); font-weight: 900; font-size: 13px; padding: 0 12px; box-shadow: 0 2px 0 #00000066; }
+.round.off { filter: grayscale(1) brightness(.75); position: relative; }
+.round.off::after { content: ""; position: absolute; left: 6px; right: 6px; top: 50%; height: 3px; background: var(--red-d); transform: rotate(-40deg); border-radius: 2px; }
+
 /* Mapa */
 .board.map { padding-top: 40px; }
 .maptools { position: absolute; top: 8px; right: 10px; display: flex; gap: 6px; }

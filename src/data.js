@@ -6,6 +6,18 @@ export const STONES = {
   fogo: { name: 'Pedra de Fogo', damage: 3, color: 0xff7a1a, price: 200, pack: 3, pierce: true },
 };
 
+// Níveis de dificuldade: multiplicadores aplicados aos inimigos e à recompensa.
+//   enemyHp/enemySpeed: vida e velocidade dos inimigos
+//   fire: tempo entre ataques (maior = ataca menos)   spear: velocidade das lanças
+//   lead: quanto os inimigos antecipam seu movimento ao mirar
+//   playerHp: corações extras do Davi   reward: multiplicador de moedas
+//   shield: duração do escudo erguido do Golias
+export const DIFFICULTIES = {
+  facil: { label: 'Fácil', desc: 'Inimigos lentos e fracos, mais vida', enemyHp: 0.7, enemySpeed: 0.75, fire: 1.5, spear: 0.8, lead: 0.1, playerHp: 2, reward: 0.8, shield: 0.7 },
+  normal: { label: 'Normal', desc: 'Como no jogo original', enemyHp: 1, enemySpeed: 1, fire: 1, spear: 1, lead: 0.5, playerHp: 0, reward: 1, shield: 1 },
+  dificil: { label: 'Difícil', desc: 'Inimigos rápidos e certeiros, menos vida', enemyHp: 1.4, enemySpeed: 1.25, fire: 0.7, spear: 1.25, lead: 0.9, playerHp: -2, reward: 1.5, shield: 1.3 },
+};
+
 export const UPGRADES = {
   forca: { name: 'Funda: força', desc: 'Pedras mais rápidas e longas', base: 100, max: 3 },
   recarga: { name: 'Funda: recarga', desc: 'Atira com menos espera', base: 100, max: 3 },

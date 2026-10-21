@@ -43,6 +43,9 @@ Também funciona direto no GitHub Pages (sem build, sem dependências — o Thre
 - Chefe Golias com fases (andar / erguer escudo / lançar), tiro na testa causa dano dobrado, câmera lenta no golpe final
 - Fim de fase: Parabéns → Pontuação → Escolha seu prêmio (6 cartas)
 - Derrota: "Não desista!" com quiz bíblico para continuar
+- Três níveis de dificuldade (Fácil, Normal, Difícil), escolhidos no menu ou no mapa
+- Trilha sonora original gerada em tempo real (WebAudio): tema do pastor no menu/mapa,
+  lira no pasto, alaúde e tambores no combate, trompas graves no Golias
 - Progresso salvo no navegador
 
 ## Estrutura
@@ -55,6 +58,7 @@ src/models.js   personagens low-poly (Davi, ovelha, urso, leão, soldado, Golias
 src/world.js    cenários (pasto, deserto, vale de Elá)
 src/data.js     fases, loja, pedras, perguntas, prêmios
 src/audio.js    efeitos sonoros sintetizados (WebAudio)
+src/music.js    trilha sonora procedural (sequenciador + instrumentos)
 src/save.js     salvar/carregar progresso
 docs/ANALISE.md engenharia reversa do vídeo
 ```

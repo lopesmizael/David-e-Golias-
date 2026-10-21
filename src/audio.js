@@ -1,16 +1,27 @@
 // Efeitos sonoros sintetizados com WebAudio (sem arquivos de áudio).
 let ctx = null;
 let muted = false;
+let sfxBus = null;
+let musicBus = null;
 
 function ac() {
   if (!ctx) {
     const C = window.AudioContext || window.webkitAudioContext;
     if (!C) return null;
     ctx = new C();
+    sfxBus = ctx.createGain();
+    sfxBus.connect(ctx.destination);
+    musicBus = ctx.createGain();
+    musicBus.gain.value = 0.55;
+    musicBus.connect(ctx.destination);
   }
   if (ctx.state === 'suspended') ctx.resume();
   return ctx;
 }
+
+// Compartilhado com a trilha sonora (music.js)
+export function audioCtx() { return ac(); }
+export function musicOut() { ac(); return musicBus; }
 
 function tone(freq, dur, { type = 'sine', vol = 0.2, slide = 0, delay = 0 } = {}) {
   const a = ac();
@@ -23,7 +34,7 @@ function tone(freq, dur, { type = 'sine', vol = 0.2, slide = 0, delay = 0 } = {}
   if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, freq + slide), t + dur);
   g.gain.setValueAtTime(vol, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  o.connect(g).connect(a.destination);
+  o.connect(g).connect(sfxBus);
   o.start(t);
   o.stop(t + dur + 0.02);
 }
@@ -42,7 +53,7 @@ function noise(dur, { vol = 0.25, freq = 800, delay = 0 } = {}) {
   f.frequency.value = freq;
   const g = a.createGain();
   g.gain.value = vol;
-  src.connect(f).connect(g).connect(a.destination);
+  src.connect(f).connect(g).connect(sfxBus);
   src.start(t);
 }
 

@@ -46,6 +46,12 @@
   <div class="title">
     <h1>Davi <span>e</span> Golias</h1>
     <p>Um menino, uma funda e muita fé.</p>
+    <div class="diffs" role="group" aria-label="Dificuldade">
+      <button class="diff" data-d="facil">Fácil</button>
+      <button class="diff sel" data-d="normal">Normal</button>
+      <button class="diff" data-d="dificil">Difícil</button>
+    </div>
+    <p class="diffdesc" id="diffDesc">Como no jogo original</p>
     <button class="wood big" id="btnPlay">JOGAR</button>
     <p class="small">Teclado: A/D ou ◀ ▶ para andar · clique para mirar e atirar · Espaço atira no alvo mais próximo · 1/2/3 troca a pedra</p>
   </div>
@@ -56,7 +62,9 @@
     <div class="ribbon">Mapa</div>
     <div class="maptools">
       <button class="round" id="btnShopMap" title="Loja">🛒</button>
-      <button class="round" id="btnMute" title="Som">🔊</button>
+      <button class="pillbtn" id="btnDiffMap" title="Trocar dificuldade">Normal</button>
+      <button class="round" id="btnMusic" title="Música">🎵</button>
+      <button class="round" id="btnMute" title="Efeitos sonoros">🔊</button>
       <button class="round" id="btnReset" title="Recomeçar progresso">↺</button>
     </div>
     <div class="mapwrap">

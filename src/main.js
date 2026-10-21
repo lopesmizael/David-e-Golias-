@@ -1,8 +1,9 @@
 // Davi e Golias — reconstrução do jogo a partir do vídeo de gameplay.
 import * as THREE from 'three';
-import { LEVELS, STONES, UPGRADES, QUIZ, PRIZES } from './data.js';
+import { LEVELS, STONES, UPGRADES, QUIZ, PRIZES, DIFFICULTIES } from './data.js';
 import { loadSave, writeSave, resetSave } from './save.js';
 import { sfx } from './audio.js';
+import { music } from './music.js';
 import { buildWorld } from './world.js';
 import {
   makeDavid, makeSheep, makeBear, makeLion, makeSoldier, makeGoliath, makeJar,
@@ -10,6 +11,8 @@ import {
 } from './models.js';
 
 const $ = (id) => document.getElementById(id);
+const diff = () => DIFFICULTIES[save.difficulty] || DIFFICULTIES.normal;
+const TRACK_FOR_SCENE = { 'pasto': 'pasto', 'pasto-tarde': 'pasto', 'deserto': 'combate', 'deserto-tarde': 'combate', 'vale': 'golias' };
 const GRAVITY = 14;
 const LANE = 6.5; // Davi anda entre -LANE e +LANE
 const SPAWN_Z = -33;
@@ -89,7 +92,7 @@ function startLevel(idx) {
   G = null;
   world = buildWorld(scene, L.scene);
   const player = { mesh: makeDavid(), x: 0, hp: 0, maxHp: 0, cd: 0, inv: 0, walkT: 0, throwT: 0, vx: 0 };
-  player.maxHp = 5 + save.upgrades.vida;
+  player.maxHp = Math.max(2, 5 + save.upgrades.vida + diff().playerHp);
   player.hp = player.maxHp;
   scene.add(player.mesh);
   G = {
@@ -117,6 +120,8 @@ function startLevel(idx) {
   show(null);
   updateHud();
   flash(L.goal, 2.5);
+  music.duck(false);
+  music.play(TRACK_FOR_SCENE[L.scene]);
 }
 
 function pickAvailable(pref) {
@@ -157,6 +162,10 @@ function spawn(type, xr) {
       sfx.roar();
       flash('Golias desafia Israel!', 2.5);
       break;
+  }
+  if (type !== 'jarro') {
+    e.hp = Math.max(1, Math.round(e.hp * diff().enemyHp));
+    e.speed *= diff().enemySpeed;
   }
   e.maxHp = e.hp;
   e.mesh = mesh;
@@ -473,7 +482,7 @@ function updateEnemy(e, dt) {
         e.z += e.speed * dt;
         e.x += Math.sign(P.x - e.x) * Math.min(Math.abs(P.x - e.x), 0.5 * dt);
         walkAnim(m, e.t * 8);
-        if (e.z >= e.stopZ && e.throwsLeft > 0) { e.state = 'aim'; e.atk = 0.8 + Math.random() * 0.6; }
+        if (e.z >= e.stopZ && e.throwsLeft > 0) { e.state = 'aim'; e.atk = (0.8 + Math.random() * 0.6) * diff().fire; }
         if (e.z >= -1.6) { e.state = 'melee'; e.atk = 0.4; }
       } else if (e.state === 'aim') {
         walkAnim(m, 0, 0);
@@ -482,17 +491,17 @@ function updateEnemy(e, dt) {
           throwSpear(e);
           e.throwsLeft--;
           e.state = 'cool';
-          e.atk = 1.4;
+          e.atk = 1.4 * diff().fire;
         }
       } else if (e.state === 'cool') {
         m.userData.parts.armR.rotation.x = 0;
         if (e.atk <= 0) {
-          if (e.throwsLeft > 0) { e.state = 'aim'; e.atk = 1.2; } else { e.state = 'walk'; e.stopZ = 0; }
+          if (e.throwsLeft > 0) { e.state = 'aim'; e.atk = 1.2 * diff().fire; } else { e.state = 'walk'; e.stopZ = 0; }
         }
       } else if (e.state === 'melee') {
         m.userData.parts.armR.rotation.x = -1.2 + Math.sin(e.t * 8) * 0.8;
         if (Math.abs(e.x - P.x) > 1) e.x += Math.sign(P.x - e.x) * 2 * dt;
-        if (e.atk <= 0 && Math.abs(e.x - P.x) < 1.4) { hurtPlayer(1); e.atk = 1.4; }
+        if (e.atk <= 0 && Math.abs(e.x - P.x) < 1.4) { hurtPlayer(1); e.atk = 1.4 * diff().fire; }
       }
       m.rotation.y = Math.atan2(P.x - e.x, -e.z) * 0.4;
       break;
@@ -505,7 +514,7 @@ function updateEnemy(e, dt) {
         walkAnim(m, e.t * 3);
         sh.position.set(-0.55, 1.1, 0.2);
         sh.rotation.y = -0.9;
-        if (e.phaseT <= 0) { e.phase = 'shield'; e.phaseT = 3.2; flash('Golias ergueu o escudo!', 1.3); }
+        if (e.phaseT <= 0) { e.phase = 'shield'; e.phaseT = 3.2 * diff().shield; flash('Golias ergueu o escudo!', 1.3); }
       } else if (e.phase === 'shield') {
         walkAnim(m, 0, 0);
         e.z = Math.min(-9, e.z + e.speed * 0.5 * dt);
@@ -523,7 +532,7 @@ function updateEnemy(e, dt) {
       e.x += Math.sign(P.x - e.x) * Math.min(Math.abs(P.x - e.x), 0.6 * dt);
       m.rotation.y = Math.atan2(P.x - e.x, -e.z) * 0.5;
       // golpe de perto
-      if (e.z > -10 && e.atk <= 0) { e.atk = 2.5; if (Math.abs(e.x - P.x) < 3) hurtPlayer(1); }
+      if (e.z > -10 && e.atk <= 0) { e.atk = 2.5 * diff().fire; if (Math.abs(e.x - P.x) < 3) hurtPlayer(1); }
       e.atk -= dt;
       break;
     }
@@ -535,8 +544,8 @@ function updateEnemy(e, dt) {
 function throwSpear(e, big = false) {
   const P = G.player;
   const from = new THREE.Vector3(e.x, big ? 6 : 2, e.z + 0.5);
-  const to = new THREE.Vector3(P.x + P.vx * 0.5, 1.2, 0);
-  const t = Math.max(0.6, Math.hypot(to.x - from.x, to.z - from.z) / (big ? 16 : 13));
+  const to = new THREE.Vector3(P.x + P.vx * diff().lead, 1.2, 0);
+  const t = Math.max(0.6, Math.hypot(to.x - from.x, to.z - from.z) / ((big ? 16 : 13) * diff().spear));
   const vel = new THREE.Vector3((to.x - from.x) / t, (to.y - from.y + 0.5 * GRAVITY * t * t) / t, (to.z - from.z) / t);
   const mesh = makeSpear();
   if (big) mesh.scale.setScalar(1.8);
@@ -640,6 +649,7 @@ function endLevel(win, reason) {
   G.ended = true;
   if (!win) {
     state = 'over';
+    music.duck(true);
     sfx.lose();
     $('overMain').classList.remove('hidden');
     $('quiz').classList.add('hidden');
@@ -651,19 +661,20 @@ function endLevel(win, reason) {
     return;
   }
   state = 'result';
+  music.stop();
   sfx.win();
   const P = G.player;
   const saved = G.sheep.filter((s) => !s.fled).length;
   const acc = G.throws ? G.hits / G.throws : 0;
   G.score += P.hp * 100 + saved * 150 + Math.round(acc * 500);
-  const coins = Math.round(G.score / 10);
+  const coins = Math.round((G.score / 10) * diff().reward);
   save.coins += coins;
   save.unlocked = Math.max(save.unlocked, Math.min(LEVELS.length, G.idx + 2));
   const prev = save.best[G.L.id] || 0;
   save.best[G.L.id] = Math.max(prev, G.score);
   persist();
   $('points').textContent = G.score;
-  $('resultCoins').textContent = `+${coins} moedas · pontaria ${Math.round(acc * 100)}%`;
+  $('resultCoins').textContent = `+${coins} moedas · pontaria ${Math.round(acc * 100)}% · ${diff().label}`;
   if (G.L.waves.some((w) => w[1] === 'golias')) {
     show('victory');
     return;
@@ -737,7 +748,11 @@ function openMap() {
   });
   $('mapCoins').textContent = save.coins;
   $('btnMute').textContent = sfx.isMuted() ? '🔇' : '🔊';
+  updateAudioButtons();
+  $('btnDiffMap').textContent = diff().label;
   show('map');
+  music.duck(false);
+  music.play('tema');
 }
 
 let introIdx = 0;
@@ -805,7 +820,7 @@ function renderShop() {
 
 function closeShop() {
   sfx.click();
-  if (shopReturn === 'play') { state = 'play'; show(null); } else openMap();
+  if (shopReturn === 'play') { state = 'play'; show(null); music.duck(false); } else openMap();
 }
 
 // ---------- Quiz ----------
@@ -859,6 +874,7 @@ function continueLevel() {
   G.spears = [];
   state = 'play';
   show(null);
+  music.duck(false);
   updateHud();
 }
 
@@ -929,11 +945,39 @@ document.querySelectorAll('.type').forEach((b) => b.addEventListener('pointerdow
   updateHud();
 }));
 
-function pause() { if (state !== 'play') return; state = 'pause'; show('pause'); }
-function resume() { sfx.click(); state = 'play'; show(null); }
+function pause() { if (state !== 'play') return; state = 'pause'; show('pause'); music.duck(true); }
+function resume() { sfx.click(); state = 'play'; show(null); music.duck(false); }
+
+// ---------- Dificuldade e som ----------
+function setDifficulty(k) {
+  if (!DIFFICULTIES[k]) return;
+  save.difficulty = k;
+  persist();
+  document.querySelectorAll('.diff').forEach((b) => b.classList.toggle('sel', b.dataset.d === k));
+  $('diffDesc').textContent = DIFFICULTIES[k].desc;
+  $('btnDiffMap').textContent = DIFFICULTIES[k].label;
+}
+document.querySelectorAll('.diff').forEach((b) => b.addEventListener('click', () => { sfx.unlock(); sfx.click(); setDifficulty(b.dataset.d); }));
+
+function updateAudioButtons() {
+  $('btnMusic').classList.toggle('off', !save.music);
+  $('btnMusic').title = save.music ? 'Música: ligada' : 'Música: desligada';
+}
+music.setEnabled(save.music);
 
 const on = (id, fn) => $(id).addEventListener('click', () => { sfx.unlock(); fn(); });
 on('btnPlay', () => { sfx.click(); openMap(); });
+on('btnDiffMap', () => {
+  const keys = Object.keys(DIFFICULTIES);
+  setDifficulty(keys[(keys.indexOf(save.difficulty) + 1) % keys.length]);
+  sfx.click();
+});
+on('btnMusic', () => {
+  save.music = !save.music;
+  persist();
+  music.setEnabled(save.music);
+  updateAudioButtons();
+});
 on('btnStart', () => { sfx.click(); startLevel(introIdx); });
 on('btnPause', pause);
 on('btnResume', resume);
@@ -978,11 +1022,15 @@ function frame(now) {
 
 setBackdrop('pasto');
 $('loading').classList.add('hidden');
+setDifficulty(save.difficulty);
+updateAudioButtons();
 show('menu');
+// a música só pode começar depois do primeiro toque/clique (regra dos navegadores)
+window.addEventListener('pointerdown', () => { if (!music.current && state === 'menu') music.play('tema'); }, { once: true });
 requestAnimationFrame(frame);
 
 // gancho para testes automatizados
 window.__game = {
   get state() { return state; }, get G() { return G; }, get save() { return save; },
-  renderer, startLevel, openMap, throwAt: (x, y, z) => throwStone(new THREE.Vector3(x, y, z)), autoTarget,
+  renderer, music, setDifficulty, startLevel, openMap, throwAt: (x, y, z) => throwStone(new THREE.Vector3(x, y, z)), autoTarget,
 };

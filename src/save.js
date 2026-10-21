@@ -9,6 +9,8 @@ export function defaultSave() {
     stones: { comum: 15, ferro: 0, fogo: 0 },
     upgrades: { forca: 0, recarga: 0, vida: 0 },
     best: {},
+    difficulty: 'normal',
+    music: true,
   };
 }
 
