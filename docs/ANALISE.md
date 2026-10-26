@@ -93,3 +93,53 @@ Loja e Pausa acessíveis a partir do HUD.
 
 As fases 3 e 5 não aparecem claramente no vídeo; foram completadas para fechar os 6 nós
 do mapa.
+
+## Segunda análise (quadro a quadro, ampliada)
+
+Os 160 quadros do storyboard foram recortados e ampliados um a um para ler textos e
+números. Novos achados e o que foi implementado a partir deles:
+
+### HUD — significado de cada painel
+
+| Painel (esq. → dir.) | Leitura no vídeo | Na reconstrução |
+|---|---|---|
+| Retrato + barra | Vida do Davi (vermelha cheia no início, quase preta perto do game over) | Barra de vida |
+| Verde | Pontos da fase | ★ pontos |
+| Amarelo com moeda | Moedas | ● moedas |
+| **Coração vermelho + barra** | **Vidas extras** (o "Não desista" oferece "duas vidas extras") | ❤ vidas — novo |
+| **Troféu** | **Recorde** | 🏆 recorde da fase — novo |
+| Baixo-direita "x5" | Munição restante | Contador por tipo de pedra |
+
+### Textos lidos
+
+- Tutorial 1: o aviso "COMPRE MAIS PEDRAS!" aparece **várias vezes seguidas**, até o
+  jogador abrir a loja → o tutorial começa com **poucas pedras (x5)** de propósito,
+  para ensinar a loja.
+- Loja: "Melhore sempre a funda ou compre pedras".
+- História entre tutoriais: "No próximo tutorial você deverá proteger as ovelhas do urso."
+- Combate: "VOCÊ QUEBROU O ESCUDO!" (soldados com escudo redondo já no Nível 2).
+- Golias: texto flutuante sobre ele ao ser atingido, e "MUDE PARA PEDRA DE FOGO!".
+- Game over: **"Não desista — Responda o quiz de perguntas e continue com duas vidas extras."**
+- Tela com Davi agachado junto a um riacho, um baú e várias pedras no chão (entre fases) →
+  referência às cinco pedras lisas (1 Sm 17:40).
+- Pausa com dois botões; mapa com "CARREGANDO..." ao entrar numa fase.
+
+### Implementado nesta rodada
+
+- **Vidas extras** separadas da barra de vida (Fácil 2, Normal 1, Difícil 0). Ao zerar a
+  vida, gasta uma vida e continua na hora.
+- **Quiz do "Não desista"** com 3 perguntas sorteadas (banco de 18, alternativas
+  embaralhadas); acertando 2, Davi volta com vida cheia **e +2 vidas**, como no vídeo.
+- **Tutorial ensina a loja**: começa com x5 pedras e 7 jarros; sem pedras, o aviso se
+  repete e o botão da loja pisca. As pedras grátis do riacho só aparecem se faltar
+  moeda (para a fase nunca travar).
+- **Textos flutuantes** sobre os inimigos ("Acertou!", "Escudo!", "Bloqueou!",
+  "Na testa! x2", "+pontos").
+- **Recorde (troféu)** no HUD.
+- **Riacho antes do Golias**: escolher 5 pedras lisas entre ásperas → 5 pedras de fogo.
+
+Melhorias de jogabilidade que não estão no vídeo, mas ajudam no celular:
+
+- **Alvo vermelho no chão** mostrando onde a lança vai cair (dá tempo de desviar).
+- **Combo**: acertos seguidos multiplicam os pontos (x1,5 a cada 3 acertos, até x3);
+  errar uma pedra zera o combo.

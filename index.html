@@ -16,10 +16,12 @@
 <div id="hud" class="hidden">
   <div class="top">
     <div class="pill life"><div class="face"></div><div class="bar"><i id="hp"></i></div></div>
+    <div class="pill lives" title="Vidas extras">❤ <b id="lives">1</b></div>
     <div class="pill score">★ <b id="score">0</b></div>
     <div class="pill coins">● <b id="coins">0</b></div>
     <div class="pill prog"><div class="bar blue"><i id="prog"></i></div></div>
     <div class="pill time">⏱ <b id="time">0:00</b></div>
+    <div class="pill best" title="Recorde da fase">🏆 <b id="best">0</b></div>
     <div class="topbtns">
       <button class="round" id="btnShopHud" title="Loja">🛒</button>
       <button class="round" id="btnPause" title="Pausa">❚❚</button>
@@ -27,6 +29,8 @@
   </div>
   <div id="sheepInfo" class="sheepinfo hidden">🐑 <b id="sheepCount">0</b></div>
   <div id="msg" class="msg hidden"></div>
+  <div id="floats"></div>
+  <div id="combo" class="combo hidden"></div>
   <div class="ctrl left">
     <button class="stonebtn" id="btnL" aria-label="Esquerda">◀</button>
     <button class="stonebtn" id="btnR" aria-label="Direita">▶</button>
@@ -127,16 +131,26 @@
   <div class="board small">
     <div class="ribbon">Não desista!</div>
     <div id="overMain">
-      <p>Responda a pergunta e continue com a vida cheia.</p>
+      <p>Responda o quiz de perguntas e continue com duas vidas extras.</p>
       <button class="wood" id="btnQuiz">RESPONDER</button>
       <button class="wood" id="btnRetry">TENTAR DE NOVO</button>
       <button class="wood" id="btnOverMap">MAPA</button>
     </div>
     <div id="quiz" class="hidden">
+      <p class="qnum" id="quizNum"></p>
       <p class="q" id="quizQ"></p>
       <div id="quizA"></div>
       <p id="quizRes"></p>
     </div>
+  </div>
+</div>
+
+<div id="screen-brook" class="screen hidden">
+  <div class="board brook">
+    <div class="ribbon">O riacho</div>
+    <p>Davi escolheu cinco pedras lisas do riacho. Toque nas pedras <b>lisas e redondas</b> — as ásperas não servem para a funda!</p>
+    <div class="river" id="river"></div>
+    <p class="brookcount">Pedras: <b id="brookN">0</b>/5</p>
   </div>
 </div>
 

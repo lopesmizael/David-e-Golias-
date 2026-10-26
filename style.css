@@ -156,3 +156,33 @@ button { font: inherit; cursor: pointer; }
   .cards { grid-template-columns: repeat(3, 72px); } .card { width: 72px; height: 80px; font-size: 11px; }
   .title h1 { font-size: 54px; }
 }
+
+/* Vidas, recorde, textos flutuantes e combo */
+.pill.lives b { color: #ff8a7a; } .pill.best b { color: var(--gold); }
+#floats { position: absolute; inset: 0; overflow: hidden; }
+.float { position: absolute; transform: translate(-50%, -50%); font-weight: 900; font-size: 20px; color: #fff; white-space: nowrap;
+  text-shadow: 0 2px 0 #000, 0 0 6px #000; animation: floatup 1s ease-out forwards; }
+.float.pts { color: #9ee37a; } .float.block { color: #ffe08a; font-size: 16px; } .float.crit { color: #ff8a3a; font-size: 26px; }
+.float.life { color: #ff8a7a; font-size: 24px; }
+@keyframes floatup { 0% { opacity: 0; margin-top: 10px; } 15% { opacity: 1; } 100% { opacity: 0; margin-top: -60px; } }
+.combo { position: absolute; top: 56px; right: 12px; background: rgba(30, 18, 8, .72); border: 2px solid var(--gold); border-radius: 12px;
+  padding: 2px 10px; font-weight: 900; color: var(--gold); font-size: 16px; animation: pop .2s; }
+.spot { position: absolute; transform: translate(-50%, -50%); }
+
+/* Quiz */
+.qnum { font-size: 13px; color: #ffe9b0; margin: 0; }
+
+/* Riacho (pedras lisas) */
+.board.brook { width: min(720px, 100%); }
+.river { position: relative; height: min(46vh, 300px); border-radius: 12px; border: 3px solid var(--wood-d); overflow: hidden;
+  background: linear-gradient(#c9b48a 0 14%, #6fb6d9 14% 86%, #c9b48a 86%); }
+.river::before { content: ""; position: absolute; inset: 14% 0; background: repeating-linear-gradient(100deg, #ffffff22 0 12px, transparent 12px 40px);
+  animation: flow 3s linear infinite; }
+@keyframes flow { from { background-position: 0 0; } to { background-position: 160px 0; } }
+.pebble { position: absolute; transform: translate(-50%, -50%); border: none; padding: 0; background: none; width: 58px; height: 46px; }
+.pebble svg { width: 100%; height: 100%; filter: drop-shadow(0 3px 2px #0006); }
+.pebble.got { animation: pick .4s forwards; pointer-events: none; }
+.pebble.no { animation: shake .35s; }
+@keyframes pick { to { transform: translate(-50%, -160%) scale(.4); opacity: 0; } }
+@keyframes shake { 25% { margin-left: -6px; } 75% { margin-left: 6px; } }
+.brookcount { font-size: 18px; font-weight: 900; } .brookcount b { color: var(--gold); }

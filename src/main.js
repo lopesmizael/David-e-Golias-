@@ -48,7 +48,7 @@ let G = null; // dados da partida atual
 let timeScale = 1;
 let slowMoT = 0;
 
-const screens = ['menu', 'map', 'intro', 'shop', 'pause', 'result', 'over', 'victory'];
+const screens = ['menu', 'map', 'intro', 'shop', 'pause', 'result', 'over', 'victory', 'brook'];
 function show(name) {
   screens.forEach((s) => $('screen-' + s).classList.toggle('hidden', s !== name));
   $('hud').classList.toggle('hidden', !(name === null || name === 'pause' || name === 'shop') || !G);
@@ -99,7 +99,7 @@ function startLevel(idx) {
     idx, L, player, enemies: [], sheep: [], stones: [], spears: [], fx: [],
     t: 0, waveI: 0, score: 0, throws: 0, hits: 0, kills: 0,
     total: L.waves.length, ended: false, continued: false, outOfAmmoT: 0, msgT: 0,
-    stone: 'comum',
+    stone: 'comum', lives: diff().lives, combo: 0,
   };
   for (let i = 0; i < L.sheep; i++) {
     const m = makeSheep();
@@ -109,12 +109,15 @@ function startLevel(idx) {
     scene.add(m);
     G.sheep.push(s);
   }
-  // Fase do Golias: Davi pega cinco pedras lisas do riacho (1 Sm 17:40)
-  if (L.waves.some((w) => w[1] === 'golias') && save.stones.fogo < 5) {
-    save.stones.fogo = 5;
+  // Fase do Golias: as pedras de fogo vêm do riacho (tela anterior); ao recomeçar
+  // direto, garante ao menos 3 para a fase continuar vencível.
+  if (isBossLevel(L) && save.stones.fogo < 3) {
+    save.stones.fogo = 3;
     persist();
   }
   G.stone = pickAvailable('comum');
+  $('floats').innerHTML = '';
+  updateCombo();
   $('sheepInfo').classList.toggle('hidden', !L.protectSheep);
   state = 'play';
   show(null);
@@ -123,6 +126,8 @@ function startLevel(idx) {
   music.duck(false);
   music.play(TRACK_FOR_SCENE[L.scene]);
 }
+
+function isBossLevel(L) { return L.waves.some((w) => w[1] === 'golias'); }
 
 function pickAvailable(pref) {
   if (save.stones[pref] > 0) return pref;
@@ -182,7 +187,7 @@ function throwStone(target) {
   const type = save.stones[G.stone] > 0 ? G.stone : pickAvailable(G.stone);
   if (save.stones[type] <= 0) {
     sfx.empty();
-    flash('Compre mais pedras!', 1.8);
+    flash(canAffordStones() ? 'Compre mais pedras! Toque no 🛒' : 'Compre mais pedras!', 1.8);
     $('btnShopHud').classList.add('pulse');
     return;
   }
@@ -287,22 +292,26 @@ function damageEnemy(e, stone, hitPos) {
     if (e.phase === 'shield' && !S.pierce) {
       sfx.block();
       puff(hitPos, 0xffe08a, 4, 0.2);
+      floatText(hitPos, 'Bloqueou!', 'block');
       flash('Mude para a pedra de fogo!', 1.6);
       return false;
     }
     if (headshot) dmg *= 2;
-    if (headshot) flash('Na testa!', 1);
+    if (headshot) floatText(hitPos, 'Na testa! x2', 'crit');
   }
+  addCombo();
   if (e.shieldHp > 0 && !S.pierce) {
     e.shieldHp -= dmg;
     sfx.block();
     puff(hitPos, 0xc9a640, 4, 0.2);
+    floatText(hitPos, 'Escudo!', 'block');
     if (e.shieldHp <= 0) {
       e.mesh.userData.parts.shield.visible = false;
-      flash('Escudo quebrado!', 1);
+      flash('Você quebrou o escudo!', 1.2);
     }
     return true;
   }
+  if (!(e.type === 'golias' && hitPos.y > e.mesh.userData.headY - 0.6)) floatText(hitPos, e.hp - dmg <= 0 ? '' : 'Acertou!');
   e.hp -= dmg;
   e.hurtT = 0.25;
   sfx.hit();
@@ -315,8 +324,9 @@ function killEnemy(e) {
   e.dead = true;
   e.deadT = 0;
   G.kills++;
-  const pts = { jarro: 100, urso: 300, leao: 400, soldado: 200, escudeiro: 300, golias: 2000 }[e.type];
+  const pts = Math.round({ jarro: 100, urso: 300, leao: 400, soldado: 200, escudeiro: 300, golias: 2000 }[e.type] * comboMult());
   G.score += pts;
+  floatText(enemyAimPoint(e).add(new THREE.Vector3(0, 0.6, 0)), '+' + pts, 'pts');
   if (e.type === 'urso') flash('Você derrubou o urso!', 1.6);
   if (e.type === 'leao') flash('Você derrubou o leão!', 1.6);
   if (e.type === 'golias') {
@@ -334,8 +344,55 @@ function hurtPlayer(n = 1) {
   P.inv = 1.0;
   sfx.hurt();
   document.body.animate([{ filter: 'none' }, { filter: 'sepia(1) saturate(4) hue-rotate(-40deg)' }, { filter: 'none' }], { duration: 300 });
-  if (P.hp <= 0) endLevel(false, 'Davi caiu!');
+  if (P.hp <= 0) {
+    if (G.lives > 0) {
+      // gasta uma vida extra e continua na hora
+      G.lives--;
+      P.hp = P.maxHp;
+      P.inv = 2;
+      floatText(new THREE.Vector3(P.x, 2.6, 0), '−1 ❤', 'life');
+      flash(G.lives ? `Você perdeu uma vida! Restam ${G.lives}` : 'Última chance!', 1.8);
+    } else endLevel(false, 'Davi caiu!');
+  }
   updateHud();
+}
+
+// ---------- Combo e textos flutuantes ----------
+function canAffordStones() { return save.coins >= Math.min(...Object.values(STONES).map((s) => s.price)); }
+
+function comboMult() { return 1 + Math.min(4, Math.floor(G.combo / 3)) * 0.5; } // até 3x
+
+function addCombo() {
+  G.combo++;
+  if (G.combo >= 3 && G.combo % 3 === 0) sfx.coin();
+  updateCombo();
+}
+
+function breakCombo() {
+  if (G.combo >= 3) floatText(new THREE.Vector3(G.player.x, 2.4, 0), 'Combo perdido', 'block');
+  G.combo = 0;
+  updateCombo();
+}
+
+function updateCombo() {
+  const el = $('combo');
+  const m = comboMult();
+  el.classList.toggle('hidden', m <= 1);
+  el.textContent = `Combo x${m.toFixed(1).replace('.0', '')} (${G.combo} acertos)`;
+}
+
+const projV = new THREE.Vector3();
+function floatText(pos, text, cls = '') {
+  if (!text) return;
+  projV.copy(pos).project(camera);
+  if (projV.z > 1) return;
+  const el = document.createElement('div');
+  el.className = 'float ' + cls;
+  el.textContent = text;
+  el.style.left = ((projV.x + 1) / 2 * 100) + '%';
+  el.style.top = ((1 - projV.y) / 2 * 100) + '%';
+  $('floats').appendChild(el);
+  setTimeout(() => el.remove(), 1000);
 }
 
 // ---------- Atualização ----------
@@ -368,9 +425,18 @@ function update(dt) {
   P.inv = Math.max(0, P.inv - dt);
   P.mesh.visible = P.inv <= 0 || Math.floor(P.inv * 12) % 2 === 0;
 
-  // sem munição: o riacho dá algumas pedras depois de um tempo
+  // sem munição e sem moedas para comprar: o riacho dá algumas pedras
+  // depois de um tempo (assim a fase nunca trava)
   const ammo = save.stones.comum + save.stones.ferro + save.stones.fogo;
-  if (ammo === 0) {
+  if (ammo === 0 && canAffordStones()) {
+    // como no vídeo: o aviso se repete e a loja pisca enquanto não houver pedras
+    G.outOfAmmoT += dt;
+    if (G.outOfAmmoT > 3) {
+      G.outOfAmmoT = 0;
+      flash('Compre mais pedras! Toque no 🛒', 2);
+      $('btnShopHud').classList.add('pulse');
+    }
+  } else if (ammo === 0) {
     G.outOfAmmoT += dt;
     if (G.outOfAmmoT > 5) {
       save.stones.comum += 3;
@@ -552,6 +618,13 @@ function throwSpear(e, big = false) {
   mesh.position.copy(from);
   scene.add(mesh);
   G.spears.push({ mesh, pos: from, vel, life: 4 });
+  // alvo vermelho no chão: mostra onde a lança vai cair para dar tempo de desviar
+  const ring = new THREE.Mesh(new THREE.RingGeometry(big ? 0.7 : 0.45, big ? 0.95 : 0.65, 24),
+    new THREE.MeshBasicMaterial({ color: 0xff3b2a, transparent: true, opacity: 0.8, depthWrite: false }));
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(to.x, 0.04, 0);
+  scene.add(ring);
+  G.fx.push({ mesh: ring, vel: new THREE.Vector3(), life: Math.min(1, t), max: 1, grow: 0, ring: true });
 }
 
 const tmp = new THREE.Vector3();
@@ -582,7 +655,7 @@ function updateStones(dt) {
         break;
       }
     }
-    if (s.pos.y < 0.05) { puff(s.pos, 0xd8c8a8, 3, 0.18); s.life = 0; }
+    if (s.pos.y < 0.05) { puff(s.pos, 0xd8c8a8, 3, 0.18); s.life = 0; breakCombo(); }
   }
   G.stones = G.stones.filter((s) => { if (s.life <= 0) scene.remove(s.mesh); return s.life > 0; });
 }
@@ -608,7 +681,7 @@ function updateFx(dt) {
     else f.vel.multiplyScalar(1 - dt * 3);
     f.mesh.position.addScaledVector(f.vel, dt);
     if (f.grow) f.mesh.scale.multiplyScalar(1 + dt * f.grow);
-    f.mesh.material.opacity = Math.max(0, f.life);
+    f.mesh.material.opacity = f.ring ? 0.35 + 0.45 * Math.abs(Math.sin(f.life * 14)) : Math.max(0, f.life);
   }
   G.fx = G.fx.filter((f) => {
     if (f.life <= 0) { scene.remove(f.mesh); f.mesh.geometry.dispose(); f.mesh.material.dispose(); return false; }
@@ -655,7 +728,7 @@ function endLevel(win, reason) {
     $('quiz').classList.add('hidden');
     $('btnQuiz').classList.toggle('hidden', G.continued);
     $('overMain').querySelector('p').textContent = (reason ? reason + ' ' : '') +
-      (G.continued ? 'Tente de novo!' : 'Responda a pergunta e continue com a vida cheia.');
+      (G.continued ? 'Tente de novo!' : `Responda o quiz (${QUIZ_N} perguntas): acertando ${QUIZ_MIN}, você continua com duas vidas extras.`);
     show('over');
     persist();
     return;
@@ -769,6 +842,51 @@ function openIntro(i) {
   show('intro');
 }
 
+// ---------- Riacho: escolher 5 pedras lisas antes do Golias ----------
+// Inspirado na tela do vídeo em que Davi aparece junto ao riacho com pedras no chão.
+const SMOOTH_SVG = '<svg viewBox="0 0 60 46"><ellipse cx="30" cy="24" rx="26" ry="18" fill="#9fa4a8"/><ellipse cx="22" cy="17" rx="10" ry="5" fill="#ffffff66"/></svg>';
+const ROUGH_SVG = '<svg viewBox="0 0 60 46"><polygon points="6,30 12,10 26,4 34,12 48,6 56,24 46,40 30,36 16,42" fill="#7d6f62"/><polygon points="14,14 24,8 22,18" fill="#ffffff33"/></svg>';
+function openBrook(idx) {
+  state = 'brook';
+  show('brook');
+  let got = 0;
+  $('brookN').textContent = '0';
+  const river = $('river');
+  river.innerHTML = '';
+  const spots = [];
+  for (let i = 0; i < 12; i++) {
+    let x, y, tries = 0;
+    do { x = 8 + Math.random() * 84; y = 22 + Math.random() * 56; tries++; } while (tries < 40 && spots.some(([a, b]) => Math.hypot(a - x, (b - y) * 1.6) < 13));
+    spots.push([x, y]);
+    const smooth = i < 7; // 7 lisas para escolher 5, 5 ásperas
+    const b = document.createElement('button');
+    b.className = 'pebble';
+    b.style.left = x + '%';
+    b.style.top = y + '%';
+    b.style.transform = `translate(-50%, -50%) rotate(${Math.round(Math.random() * 60 - 30)}deg) scale(${0.85 + Math.random() * 0.3})`;
+    b.innerHTML = smooth ? SMOOTH_SVG : ROUGH_SVG;
+    b.setAttribute('aria-label', smooth ? 'Pedra lisa' : 'Pedra áspera');
+    b.addEventListener('click', () => {
+      if (got >= 5) return;
+      if (!smooth) {
+        sfx.empty();
+        b.classList.remove('no'); void b.offsetWidth; b.classList.add('no');
+        return;
+      }
+      got++;
+      sfx.coin();
+      b.classList.add('got');
+      $('brookN').textContent = got;
+      if (got === 5) {
+        save.stones.fogo += 5;
+        persist();
+        setTimeout(() => startLevel(idx), 700);
+      }
+    });
+    river.appendChild(b);
+  }
+}
+
 // ---------- Loja ----------
 let shopReturn = 'map';
 function openShop() {
@@ -824,46 +942,65 @@ function closeShop() {
 }
 
 // ---------- Quiz ----------
+// Como no vídeo: "Responda o quiz de perguntas e continue com duas vidas extras".
+// São 3 perguntas sorteadas; acertando pelo menos 2, Davi volta com vida cheia + 2 vidas.
+const QUIZ_N = 3;
+const QUIZ_MIN = 2;
 function openQuiz() {
-  const Q = QUIZ[Math.floor(Math.random() * QUIZ.length)];
+  const pool = [...QUIZ].sort(() => Math.random() - 0.5).slice(0, QUIZ_N);
+  let qi = 0, right = 0;
   $('overMain').classList.add('hidden');
   $('quiz').classList.remove('hidden');
-  $('quizQ').textContent = Q.q;
-  $('quizRes').textContent = '';
-  const box = $('quizA');
-  box.innerHTML = '';
-  Q.a.forEach((txt, i) => {
-    const b = document.createElement('button');
-    b.className = 'wood';
-    b.textContent = txt;
-    b.addEventListener('click', () => {
-      [...box.children].forEach((x) => { x.disabled = true; });
-      if (i === Q.c) {
-        b.classList.add('ok');
-        sfx.win();
-        $('quizRes').textContent = 'Muito bem! Continue lutando!';
-        setTimeout(continueLevel, 1100);
-      } else {
-        b.classList.add('bad');
-        box.children[Q.c].classList.add('ok');
-        sfx.lose();
-        $('quizRes').textContent = 'Não foi dessa vez.';
-        G.continued = true;
-        setTimeout(() => {
-          $('quiz').classList.add('hidden');
-          $('overMain').classList.remove('hidden');
-          $('btnQuiz').classList.add('hidden');
-          $('overMain').querySelector('p').textContent = 'Tente de novo!';
-        }, 1400);
-      }
+  const ask = () => {
+    const Q = pool[qi];
+    $('quizNum').textContent = `Pergunta ${qi + 1} de ${QUIZ_N} · acertos: ${right}`;
+    $('quizQ').textContent = Q.q;
+    $('quizRes').textContent = '';
+    const box = $('quizA');
+    box.innerHTML = '';
+    // embaralha as alternativas para a posição da certa variar
+    Q.a.map((txt, k) => ({ txt, k })).sort(() => Math.random() - 0.5).forEach(({ txt, k }) => {
+      const b = document.createElement('button');
+      b.className = 'wood';
+      b.textContent = txt;
+      b.dataset.k = k;
+      b.addEventListener('click', () => {
+        [...box.children].forEach((x) => { x.disabled = true; if (Number(x.dataset.k) === Q.c) x.classList.add('ok'); });
+        if (k === Q.c) { right++; sfx.coin(); $('quizRes').textContent = 'Certo!'; } else { b.classList.add('bad'); sfx.empty(); $('quizRes').textContent = 'Errado.'; }
+        qi++;
+        setTimeout(qi < QUIZ_N ? ask : finish, 1000);
+      });
+      box.appendChild(b);
     });
-    box.appendChild(b);
-  });
+  };
+  const finish = () => {
+    G.continued = true;
+    $('quizA').innerHTML = '';
+    $('quizNum').textContent = '';
+    if (right >= QUIZ_MIN) {
+      sfx.win();
+      $('quizQ').textContent = `Você acertou ${right} de ${QUIZ_N}!`;
+      $('quizRes').textContent = 'Continue lutando com 2 vidas extras!';
+      setTimeout(() => continueLevel(2), 1400);
+    } else {
+      sfx.lose();
+      $('quizQ').textContent = `Você acertou ${right} de ${QUIZ_N}.`;
+      $('quizRes').textContent = `Era preciso acertar ${QUIZ_MIN}. Não foi dessa vez.`;
+      setTimeout(() => {
+        $('quiz').classList.add('hidden');
+        $('overMain').classList.remove('hidden');
+        $('btnQuiz').classList.add('hidden');
+        $('overMain').querySelector('p').textContent = 'Tente de novo!';
+      }, 1800);
+    }
+  };
+  ask();
 }
 
-function continueLevel() {
+function continueLevel(extraLives = 0) {
   G.continued = true;
   G.ended = false;
+  G.lives += extraLives;
   G.player.hp = G.player.maxHp;
   G.player.inv = 2;
   // as ovelhas que fugiram voltam
@@ -887,11 +1024,13 @@ function updateHud(light = false) {
   const remaining = G.total - G.waveI + alive;
   const prog = G.total ? 1 - remaining / G.total : 0;
   const key = [P.hp, G.score, save.coins, prog.toFixed(2), Math.floor(G.t), G.stone, save.stones.comum, save.stones.ferro, save.stones.fogo,
-    G.sheep.filter((s) => !s.fled).length, P.cd > 0].join('|');
+    G.sheep.filter((s) => !s.fled).length, P.cd > 0, G.lives].join('|');
   if (light && key === hudCache) return;
   hudCache = key;
   $('hp').style.width = (100 * Math.max(0, P.hp) / P.maxHp) + '%';
   $('score').textContent = G.score;
+  $('lives').textContent = G.lives;
+  $('best').textContent = Math.max(save.best[G.L.id] || 0, G.score);
   $('coins').textContent = save.coins;
   $('prog').style.width = (prog * 100) + '%';
   const s = Math.floor(G.t);
@@ -978,7 +1117,7 @@ on('btnMusic', () => {
   music.setEnabled(save.music);
   updateAudioButtons();
 });
-on('btnStart', () => { sfx.click(); startLevel(introIdx); });
+on('btnStart', () => { sfx.click(); if (isBossLevel(LEVELS[introIdx])) openBrook(introIdx); else startLevel(introIdx); });
 on('btnPause', pause);
 on('btnResume', resume);
 on('btnRestart', () => startLevel(G.idx));
@@ -1032,5 +1171,5 @@ requestAnimationFrame(frame);
 // gancho para testes automatizados
 window.__game = {
   get state() { return state; }, get G() { return G; }, get save() { return save; },
-  renderer, music, setDifficulty, startLevel, openMap, throwAt: (x, y, z) => throwStone(new THREE.Vector3(x, y, z)), autoTarget,
+  renderer, music, setDifficulty, startLevel, openMap, hurt: (n) => hurtPlayer(n), quiz: QUIZ, throwAt: (x, y, z) => throwStone(new THREE.Vector3(x, y, z)), autoTarget,
 };

@@ -11,11 +11,11 @@ export const STONES = {
 //   fire: tempo entre ataques (maior = ataca menos)   spear: velocidade das lanças
 //   lead: quanto os inimigos antecipam seu movimento ao mirar
 //   playerHp: corações extras do Davi   reward: multiplicador de moedas
-//   shield: duração do escudo erguido do Golias
+//   shield: duração do escudo erguido do Golias   lives: vidas extras no início da fase
 export const DIFFICULTIES = {
-  facil: { label: 'Fácil', desc: 'Inimigos lentos e fracos, mais vida', enemyHp: 0.7, enemySpeed: 0.75, fire: 1.5, spear: 0.8, lead: 0.1, playerHp: 2, reward: 0.8, shield: 0.7 },
-  normal: { label: 'Normal', desc: 'Como no jogo original', enemyHp: 1, enemySpeed: 1, fire: 1, spear: 1, lead: 0.5, playerHp: 0, reward: 1, shield: 1 },
-  dificil: { label: 'Difícil', desc: 'Inimigos rápidos e certeiros, menos vida', enemyHp: 1.4, enemySpeed: 1.25, fire: 0.7, spear: 1.25, lead: 0.9, playerHp: -2, reward: 1.5, shield: 1.3 },
+  facil: { label: 'Fácil', desc: 'Inimigos lentos e fracos, mais vida', enemyHp: 0.7, enemySpeed: 0.75, fire: 1.5, spear: 0.8, lead: 0.1, playerHp: 2, reward: 0.8, shield: 0.7, lives: 2 },
+  normal: { label: 'Normal', desc: 'Como no jogo original', enemyHp: 1, enemySpeed: 1, fire: 1, spear: 1, lead: 0.5, playerHp: 0, reward: 1, shield: 1, lives: 1 },
+  dificil: { label: 'Difícil', desc: 'Inimigos rápidos e certeiros, menos vida', enemyHp: 1.4, enemySpeed: 1.25, fire: 0.7, spear: 1.25, lead: 0.9, playerHp: -2, reward: 1.5, shield: 1.3, lives: 0 },
 };
 
 export const UPGRADES = {
@@ -33,7 +33,8 @@ export const LEVELS = [
     goal: 'Acerte todos os jarros',
     tip: 'Toque/clique na tela para mirar e atirar. Use ◀ ▶ (ou A/D) para andar.',
     sheep: 3, protectSheep: false,
-    waves: [[0, 'jarro', -0.6], [0, 'jarro', 0], [0, 'jarro', 0.6], [0, 'jarro', -0.3], [0, 'jarro', 0.3]],
+    waves: [[0, 'jarro', -0.7], [0, 'jarro', -0.35], [0, 'jarro', 0], [0, 'jarro', 0.35], [0, 'jarro', 0.7], [0, 'jarro', -0.15], [0, 'jarro', 0.5]],
+    teachShop: true, // como no vídeo: poucas pedras para ensinar a usar a loja
   },
   {
     id: 2, name: 'O urso', tag: 'TUTORIAL', scene: 'pasto',
@@ -79,6 +80,7 @@ export const LEVELS = [
   },
 ];
 
+// Quiz do "Não desista": 3 perguntas sorteadas; acertando 2, Davi continua com 2 vidas extras.
 export const QUIZ = [
   { q: 'Qual era a profissão de Davi antes de enfrentar Golias?', a: ['Pastor de ovelhas', 'Soldado', 'Pescador'], c: 0 },
   { q: 'Quantas pedras Davi pegou no riacho?', a: ['Três', 'Cinco', 'Sete'], c: 1 },
@@ -88,6 +90,16 @@ export const QUIZ = [
   { q: 'Que animais Davi enfrentou para proteger o rebanho?', a: ['Lobo e cobra', 'Leão e urso', 'Javali e raposa'], c: 1 },
   { q: 'Em que livro da Bíblia está a história de Davi e Golias?', a: ['1 Samuel', 'Gênesis', 'Juízes'], c: 0 },
   { q: 'Em que vale aconteceu a batalha?', a: ['Vale do Jordão', 'Vale de Elá', 'Vale de Hinom'], c: 1 },
+  { q: 'De que cidade Golias vinha?', a: ['Gate', 'Jericó', 'Nínive'], c: 0 },
+  { q: 'Por que Davi não usou a armadura do rei?', a: ['Era pesada e ele não estava acostumado', 'Estava quebrada', 'O rei pediu de volta'], c: 0 },
+  { q: 'Onde a pedra de Davi acertou Golias?', a: ['No braço', 'Na testa', 'No escudo'], c: 1 },
+  { q: 'Davi era o filho mais ___ de Jessé.', a: ['Velho', 'Novo', 'Alto'], c: 1 },
+  { q: 'Em que cidade Davi nasceu?', a: ['Belém', 'Nazaré', 'Jerusalém'], c: 0 },
+  { q: 'Qual profeta ungiu Davi como futuro rei?', a: ['Elias', 'Samuel', 'Isaías'], c: 1 },
+  { q: 'Por quantos dias Golias desafiou o exército de Israel?', a: ['7 dias', '40 dias', '3 dias'], c: 1 },
+  { q: 'Que instrumento Davi tocava para o rei Saul?', a: ['Harpa (lira)', 'Trombeta', 'Tambor'], c: 0 },
+  { q: 'O que Davi levava para seus irmãos no acampamento?', a: ['Comida', 'Espadas', 'Ovelhas'], c: 0 },
+  { q: 'Em nome de quem Davi disse que enfrentaria Golias?', a: ['Do rei Saul', 'Do Senhor', 'De seu pai'], c: 1 },
 ];
 
 // Prêmios das 6 cartas

@@ -6,7 +6,7 @@ export function defaultSave() {
   return {
     unlocked: 1,
     coins: 150,
-    stones: { comum: 15, ferro: 0, fogo: 0 },
+    stones: { comum: 5, ferro: 0, fogo: 0 }, // como no vídeo: começa com x5
     upgrades: { forca: 0, recarga: 0, vida: 0 },
     best: {},
     difficulty: 'normal',
